@@ -44,10 +44,10 @@ struct RootView: View {
                 .tabItem {
                     Label("Projects", systemImage: "folder")
                 }
-            WikiView()
+            /*WikiView()
                 .tabItem {
                     Label("Wiki", systemImage: "book.fill")
-                }
+                }*/
             Settings()
                 .tabItem {
                     Label("Settings", systemImage: "gear")
