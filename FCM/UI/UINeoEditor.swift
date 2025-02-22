@@ -464,7 +464,7 @@ struct NeoEditor: UIViewRepresentable {
             self.parent = markdownEditorView
             self.shouldCheck = false
 
-            let dotypecheck = UserDefaults.standard.bool(forKey: "CETypechecking") ?? false
+            let dotypecheck = UserDefaults.standard.bool(forKey: "CETypechecking")
             if dotypecheck {
                 let suffix: String = gsuffix(from: self.parent.filepath)
                 if suffix == "c" || suffix == "cpp" || suffix == "m" || suffix == "mm" || suffix == "swift" {
@@ -504,9 +504,6 @@ struct NeoEditor: UIViewRepresentable {
 
             debounceWorkItem?.cancel()
             debounceWorkItem = DispatchWorkItem { [self] in
-
-                let text: String = textView.text
-
                 DispatchQueue.global(qos: .userInitiated).async {
                     let project = self.parent.project
                     mainlogSystem.clearLog()
@@ -635,7 +632,6 @@ struct NeoEditor: UIViewRepresentable {
                         return String(repeating: " ", count: spacing)
                     }
                 }()
-                let spacing: Int = UserDefaults.standard.integer(forKey: "tabspacing")
                 guard let cur_line_text = currentLine(in: textView) else { return false }
                 let count = countConsecutiveOccurrences(of: tabchar, in: cur_line_text)
                 parent.insertTextAtCurrentPosition(textView: textView, newText: "\n\(String(repeating: tabchar, count: count))")

@@ -89,8 +89,13 @@ struct NeoLog: View {
                                 Text(highlightMessage(item.Message.lineFix()))
                                     .font(.system(size: 10, design: .monospaced))
                                 Spacer()
-                                }
                             }
+                        }
+                    }
+                    .contextMenu {
+                        Button("Copy") {
+                            copyToClipboard(text: getLogText(from: logsys.log))
+                        }
                     }
                 }
             }
@@ -336,4 +341,9 @@ func extractFirstLine(from input: String) -> String {
 
 func extractLines(from input: String) -> [String] {
     return input.components(separatedBy: .newlines)
+}
+
+func getLogText(from logs: [LogItem]) -> String {
+    return logs.map { $0.Message.lineFix() }
+               .joined(separator: "\n")
 }

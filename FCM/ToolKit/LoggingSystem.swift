@@ -37,7 +37,7 @@ class LogSystem: ObservableObject {
     }
     
     private func addLog(_ unfiltered_item: String) {
-        var items = unfiltered_item.split(separator: "\n")
+        let items = unfiltered_item.split(separator: "\n")
         var item: String = ""
         for line in items {
             if !line.contains("remark:") {

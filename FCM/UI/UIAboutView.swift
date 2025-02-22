@@ -35,7 +35,7 @@ struct Frida: View {
 
     var credits = {
         var save = [
-            ("FridaDEV", "Main Developer", "https://github.com/fridakitten.png"),
+            ("SeanIsTethered", "Main Developer", "https://github.com/seanistethered.png"),
             ("AppInstaller iOS", "Developer", "https://github.com/AppInstalleriOSGH.png"),
             ("RoothideDev", "Contributor", "https://github.com/roothide.png"),
             ("Lorenzo Ferron", "Contributor", "https://github.com/miticollo.png"),
