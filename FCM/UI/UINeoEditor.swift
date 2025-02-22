@@ -607,28 +607,40 @@ struct NeoEditor: UIViewRepresentable {
 
         func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
             guard let textView = textView as? CustomTextView else { return true }
-
             let mode: Int = UserDefaults.standard.integer(forKey: "tabmode")
             if textView.didPasted {
                 return true
             }
-            if text.contains("\n") {
-                let tabchar: String = {
-                    if mode != 1 {
-                        return "\t"
+            let tabchar: String = {
+                if mode != 1 {
+                    return "\t"
+                } else {
+                    let spacing: Int = UserDefaults.standard.integer(forKey: "tabspacing")
+                    return String(repeating: " ", count: spacing)
+                }
+            }()
+
+            if text == "" && range.length == 1 {
+                if let cur_line_text = currentLine(in: textView), cur_line_text.hasSuffix(tabchar) {
+                    if mode == 1 {
+                        for _ in 1...UserDefaults.standard.integer(forKey: "tabspacing") {
+                            textView.deleteBackward()
+                        }
                     } else {
-                        let spacing: Int = UserDefaults.standard.integer(forKey: "tabspacing")
-                        return String(repeating: " ", count: spacing)
+                        textView.deleteBackward()
                     }
-                }()
+                    return false
+                }
+            }
+
+            if text.contains("\n") {
                 guard let cur_line_text = currentLine(in: textView) else { return false }
                 let count = countConsecutiveOccurrences(of: tabchar, in: cur_line_text)
                 parent.insertTextAtCurrentPosition(textView: textView, newText: "\n\(String(repeating: tabchar, count: count))")
                 return false
             }
-            if mode != 1 {
-                return true
-            } else if text.contains("\t") {
+
+            if mode == 1, text.contains("\t") {
                 let spacing: Int = UserDefaults.standard.integer(forKey: "tabspacing")
                 parent.insertTextAtCurrentPosition(textView: textView, newText: String(repeating: " ", count: spacing))
                 return false
