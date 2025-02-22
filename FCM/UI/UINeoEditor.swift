@@ -177,7 +177,6 @@ struct NeoEditor: UIViewRepresentable {
     @AppStorage("CEFontSize") var font: Double = 13.0
     @AppStorage("CEToolbar") var enableToolbar: Bool = true
     @AppStorage("CECurrentLineHighlighting") var current_line_highlighting: Bool = false
-    @AppStorage("CEHighlightCache") var cachehighlightings: Bool = false
     @AppStorage("CETypechecking") var dotypecheck: Bool = false
 
     init(
@@ -457,7 +456,6 @@ struct NeoEditor: UIViewRepresentable {
         private var isInvalidated = false
         private var debounceWorkItem: DispatchWorkItem?
         private let debounceDelay: TimeInterval = 2.0
-        private var highlightCache: [NSRange: [NSAttributedString.Key: Any]] = [:]
         private var shouldCheck: Bool
 
         init(_ markdownEditorView: NeoEditor) {
@@ -571,12 +569,6 @@ struct NeoEditor: UIViewRepresentable {
                     let matches = rule.pattern.matches(in: text, options: [], range: visibleRange)
                     matches.forEach { match in
                         let matchRange = match.range
-                        if let cachedAttributes = self.highlightCache[matchRange] {
-                            for (key, value) in cachedAttributes {
-                                attributesToApply.append((matchRange, key, value))
-                            }
-                            return
-                        }
                         let isOverlapping = attributesToApply.contains { (range, _, _) in
                             NSIntersectionRange(range, matchRange).length > 0
                         }
@@ -587,9 +579,6 @@ struct NeoEditor: UIViewRepresentable {
                             if let matchRangeStr = Range(match.range, in: text) {
                                 let matchContent = String(text[matchRangeStr])
                                 let value = calculateValue(matchContent, matchRangeStr)
-                                if self.parent.cachehighlightings {
-                                    self.highlightCache[matchRange] = [key: value]
-                                }
                                 attributesToApply.append((match.range, key, value))
                             }
                         }
