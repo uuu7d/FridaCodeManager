@@ -623,9 +623,7 @@ struct NeoEditor: UIViewRepresentable {
             if text == "" && range.length == 1 {
                 if let cur_line_text = currentLine(in: textView), cur_line_text.hasSuffix(tabchar) {
                     if mode == 1 {
-                        for _ in 1...UserDefaults.standard.integer(forKey: "tabspacing") {
-                            textView.deleteBackward()
-                        }
+                        backspaceMultipleCharacters(in: textView, numberOfCharacters: UserDefaults.standard.integer(forKey: "tabspacing"))
                     } else {
                         textView.deleteBackward()
                     }
@@ -914,6 +912,18 @@ class PaddedLabel: UILabel {
         let size = super.intrinsicContentSize
         return CGSize(width: size.width + textInsets.left + textInsets.right,
                       height: size.height + textInsets.top + textInsets.bottom)
+    }
+}
+
+func backspaceMultipleCharacters(in textView: UITextView, numberOfCharacters: Int) {
+    guard let selectedRange = textView.selectedTextRange, numberOfCharacters > 0 else { return }
+    let cursorPosition = textView.offset(from: textView.beginningOfDocument, to: selectedRange.start)
+    let startPosition = max(cursorPosition - numberOfCharacters, 0)
+    if let startPositionIndex = textView.position(from: textView.beginningOfDocument, offset: startPosition) {
+        let rangeToDelete = textView.textRange(from: startPositionIndex, to: selectedRange.start)
+        if let rangeToDelete = rangeToDelete {
+            textView.replace(rangeToDelete, withText: "")
+        }
     }
 }
 
