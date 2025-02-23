@@ -637,10 +637,12 @@ struct NeoEditor: UIViewRepresentable {
 
             // auto curly braces implementation
             if text.contains("{") {
-                let currentLineRange = textView.cachedLineRange ?? NSRange(location: 0, length: 0)
                 guard let cur_line_text = currentLine(in: textView) else { return false }
                 let count = countConsecutiveOccurrences(of: tabchar, in: cur_line_text)
-                parent.insertTextAtCurrentPosition(textView: textView, newText: "{\n\(String(repeating: tabchar, count: count))}")
+                parent.insertTextAtCurrentPosition(textView: textView, newText: "{")
+                let currentLineRange = textView.cachedLineRange ?? NSRange(location: 0, length: 0)
+                parent.insertTextAtCurrentPosition(textView: textView, newText: "\n\(String(repeating: tabchar, count: count + 1))\n\(String(repeating: tabchar, count: count))}")
+                moveCursorOneLineUp(in: textView)
                 self.applyHighlighting(to: textView, with: currentLineRange)
                 return false
             }
@@ -928,6 +930,17 @@ class CustomTextView: UITextView {
 
     func setLayoutCompletionHandler(_ handler: @escaping () -> Void) {
         self.onLayoutCompletion = handler
+    }
+}
+
+func moveCursorOneLineUp(in textView: UITextView) {
+    guard let text = textView.text, !text.isEmpty else { return }
+    let currentLocation = textView.selectedRange.location
+    let nsText = text as NSString
+    let currentLineRange = nsText.lineRange(for: NSRange(location: currentLocation, length: 0))
+    if currentLineRange.location > 0 {
+        let previousLineRange = nsText.lineRange(for: NSRange(location: currentLineRange.location - 1, length: 0))
+        textView.selectedRange = NSRange(location: NSMaxRange(previousLineRange) - 1, length: 0)
     }
 }
 
