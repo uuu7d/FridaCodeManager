@@ -631,7 +631,7 @@ struct NeoEditor: UIViewRepresentable {
                 }
             }
 
-            // attempt to implement auto-curly-braces, wish me luck
+            // auto curly braces implementation
             if text.contains("{") {
                 let currentLineRange = textView.cachedLineRange ?? NSRange(location: 0, length: 0)
                 guard let cur_line_text = currentLine(in: textView) else { return false }
@@ -641,6 +641,14 @@ struct NeoEditor: UIViewRepresentable {
                 return false
             }
 
+            // auto braces implementation
+            if text.contains("(") {
+                parent.insertTextAtCurrentPosition(textView: textView, newText: "()")
+                textView.selectedRange = NSMakeRange(textView.selectedRange.location - 1, 0)
+                return false
+            }
+
+            // auto tabbing implementation
             if text.contains("\n") {
                 guard let cur_line_text = currentLine(in: textView) else { return false }
                 let count = countConsecutiveOccurrences(of: tabchar, in: cur_line_text)
@@ -648,6 +656,7 @@ struct NeoEditor: UIViewRepresentable {
                 return false
             }
 
+            // hardware keyboard implementation
             if mode == 1, text.contains("\t") {
                 let spacing: Int = UserDefaults.standard.integer(forKey: "tabspacing")
                 parent.insertTextAtCurrentPosition(textView: textView, newText: String(repeating: " ", count: spacing))
