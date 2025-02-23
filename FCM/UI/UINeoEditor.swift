@@ -457,6 +457,16 @@ struct NeoEditor: UIViewRepresentable {
         private var debounceWorkItem: DispatchWorkItem?
         private let debounceDelay: TimeInterval = 2.0
         private var shouldCheck: Bool
+        let mode: Int = UserDefaults.standard.integer(forKey: "tabmode")
+        let tabchar: String = {
+            let mode: Int = UserDefaults.standard.integer(forKey: "tabmode")
+            if mode != 1 {
+                return "\t"
+            } else {
+                let spacing: Int = UserDefaults.standard.integer(forKey: "tabspacing")
+                return String(repeating: " ", count: spacing)
+            }
+        }()
 
         init(_ markdownEditorView: NeoEditor) {
             self.parent = markdownEditorView
