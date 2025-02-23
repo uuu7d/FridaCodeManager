@@ -246,7 +246,7 @@ struct buildView: View {
                             }
                         }
                         withAnimation {
-                            BVstatus = "Done :3"
+                            BVstatus = "Done"
                             BVprogress = 1.0
                             compiling = false
                         }
