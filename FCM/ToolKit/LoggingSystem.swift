@@ -44,6 +44,9 @@ class LogSystem: ObservableObject {
                 item.append("\(line)\n")
             }
         }
+        if item == "" {
+            return
+        }
         DispatchQueue.main.async {
             self.log.append(LogItem(Message: item))
             if self.log.count > 100 {
