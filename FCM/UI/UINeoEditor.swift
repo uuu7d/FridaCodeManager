@@ -608,9 +608,11 @@ struct NeoEditor: UIViewRepresentable {
         func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
             guard let textView = textView as? CustomTextView else { return true }
             let mode: Int = UserDefaults.standard.integer(forKey: "tabmode")
+
             if textView.didPasted {
                 return true
             }
+
             let tabchar: String = {
                 if mode != 1 {
                     return "\t"
@@ -644,6 +646,13 @@ struct NeoEditor: UIViewRepresentable {
             // auto braces implementation
             if text.contains("(") {
                 parent.insertTextAtCurrentPosition(textView: textView, newText: "()")
+                textView.selectedRange = NSMakeRange(textView.selectedRange.location - 1, 0)
+                return false
+            }
+
+            // auto string implementation
+            if text.contains("\"") {
+                parent.insertTextAtCurrentPosition(textView: textView, newText: "\"\"")
                 textView.selectedRange = NSMakeRange(textView.selectedRange.location - 1, 0)
                 return false
             }
