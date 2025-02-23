@@ -457,6 +457,7 @@ struct NeoEditor: UIViewRepresentable {
         private var debounceWorkItem: DispatchWorkItem?
         private let debounceDelay: TimeInterval = 2.0
         private var shouldCheck: Bool
+        private var shouldAutocomplete: Bool
         let mode: Int = UserDefaults.standard.integer(forKey: "tabmode")
         let tabchar: String = {
             let mode: Int = UserDefaults.standard.integer(forKey: "tabmode")
@@ -471,13 +472,17 @@ struct NeoEditor: UIViewRepresentable {
         init(_ markdownEditorView: NeoEditor) {
             self.parent = markdownEditorView
             self.shouldCheck = false
+            self.shouldAutocomplete = false
 
             let dotypecheck = UserDefaults.standard.bool(forKey: "CETypechecking")
+            let suffix: String = gsuffix(from: self.parent.filepath)
             if dotypecheck {
-                let suffix: String = gsuffix(from: self.parent.filepath)
                 if suffix == "c" || suffix == "cpp" || suffix == "m" || suffix == "mm" || suffix == "swift" {
                     self.shouldCheck = true
                 }
+            }
+            if suffix == "c" || suffix == "cpp" || suffix == "m" || suffix == "mm" || suffix == "swift" {
+               self.shouldAutocomplete = true
             }
         }
 
@@ -616,64 +621,66 @@ struct NeoEditor: UIViewRepresentable {
         }
 
         func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
-            guard let textView = textView as? CustomTextView else { return true }
+            if shouldAutocomplete {
+                guard let textView = textView as? CustomTextView else { return true }
 
-            // AUTOCOMPLETION
-            if textView.didPasted {
-                return true
-            }
+                // AUTOCOMPLETION
+                if textView.didPasted {
+                    return true
+                }
 
-            // spacing options
-            if text == "" && range.length == 1 {
-                if let cur_line_text = currentLine(in: textView), cur_line_text.hasSuffix(tabchar) {
-                    if mode == 1 {
-                        backspaceMultipleCharacters(in: textView, numberOfCharacters: UserDefaults.standard.integer(forKey: "tabspacing"))
-                    } else {
-                        textView.deleteBackward()
+                // spacing options
+                if text == "" && range.length == 1 {
+                    if let cur_line_text = currentLine(in: textView), cur_line_text.hasSuffix(tabchar) {
+                        if mode == 1 {
+                            backspaceMultipleCharacters(in: textView, numberOfCharacters: UserDefaults.standard.integer(forKey: "tabspacing"))
+                        } else {
+                            textView.deleteBackward()
+                        }
+                        return false
                     }
+                }
+
+                // auto curly braces implementation
+                if text.contains("{") {
+                    guard let cur_line_text = currentLine(in: textView) else { return false }
+                    let count = countConsecutiveOccurrences(of: tabchar, in: cur_line_text)
+                    parent.insertTextAtCurrentPosition(textView: textView, newText: "{")
+                    let currentLineRange = textView.cachedLineRange ?? NSRange(location: 0, length: 0)
+                    parent.insertTextAtCurrentPosition(textView: textView, newText: "\n\(String(repeating: tabchar, count: count + 1))\n\(String(repeating: tabchar, count: count))}")
+                    moveCursorOneLineUp(in: textView)
+                    self.applyHighlighting(to: textView, with: currentLineRange)
                     return false
                 }
-            }
 
-            // auto curly braces implementation
-            if text.contains("{") {
-                guard let cur_line_text = currentLine(in: textView) else { return false }
-                let count = countConsecutiveOccurrences(of: tabchar, in: cur_line_text)
-                parent.insertTextAtCurrentPosition(textView: textView, newText: "{")
-                let currentLineRange = textView.cachedLineRange ?? NSRange(location: 0, length: 0)
-                parent.insertTextAtCurrentPosition(textView: textView, newText: "\n\(String(repeating: tabchar, count: count + 1))\n\(String(repeating: tabchar, count: count))}")
-                moveCursorOneLineUp(in: textView)
-                self.applyHighlighting(to: textView, with: currentLineRange)
-                return false
-            }
+                // auto braces implementation
+                if text.contains("(") {
+                    parent.insertTextAtCurrentPosition(textView: textView, newText: "()")
+                    textView.selectedRange = NSMakeRange(textView.selectedRange.location - 1, 0)
+                    return false
+                }
 
-            // auto braces implementation
-            if text.contains("(") {
-                parent.insertTextAtCurrentPosition(textView: textView, newText: "()")
-                textView.selectedRange = NSMakeRange(textView.selectedRange.location - 1, 0)
-                return false
-            }
+                // auto string implementation
+                if text.contains("\"") {
+                    parent.insertTextAtCurrentPosition(textView: textView, newText: "\"\"")
+                    textView.selectedRange = NSMakeRange(textView.selectedRange.location - 1, 0)
+                    return false
+                }
 
-            // auto string implementation
-            if text.contains("\"") {
-                parent.insertTextAtCurrentPosition(textView: textView, newText: "\"\"")
-                textView.selectedRange = NSMakeRange(textView.selectedRange.location - 1, 0)
-                return false
-            }
+                // auto tabbing implementation
+                if text.contains("\n") {
+                    guard let cur_line_text = currentLine(in: textView) else { return false }
+                    let count = countConsecutiveOccurrences(of: tabchar, in: cur_line_text)
+                    parent.insertTextAtCurrentPosition(textView: textView, newText: "\n\(String(repeating: tabchar, count: count))")
+                    return false
+                }
 
-            // auto tabbing implementation
-            if text.contains("\n") {
-                guard let cur_line_text = currentLine(in: textView) else { return false }
-                let count = countConsecutiveOccurrences(of: tabchar, in: cur_line_text)
-                parent.insertTextAtCurrentPosition(textView: textView, newText: "\n\(String(repeating: tabchar, count: count))")
-                return false
-            }
-
-            // hardware keyboard implementation
-            if mode == 1, text.contains("\t") {
-                let spacing: Int = UserDefaults.standard.integer(forKey: "tabspacing")
-                parent.insertTextAtCurrentPosition(textView: textView, newText: String(repeating: " ", count: spacing))
-                return false
+                // hardware keyboard implementation
+                if mode == 1, text.contains("\t") {
+                    let spacing: Int = UserDefaults.standard.integer(forKey: "tabspacing")
+                    parent.insertTextAtCurrentPosition(textView: textView, newText: String(repeating: " ", count: spacing))
+                    return false
+                }
             }
 
             return true
