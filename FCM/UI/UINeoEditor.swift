@@ -631,6 +631,16 @@ struct NeoEditor: UIViewRepresentable {
                 }
             }
 
+            // attempt to implement auto-curly-braces, wish me luck
+            if text.contains("{") {
+                let currentLineRange = textView.cachedLineRange ?? NSRange(location: 0, length: 0)
+                guard let cur_line_text = currentLine(in: textView) else { return false }
+                let count = countConsecutiveOccurrences(of: tabchar, in: cur_line_text)
+                parent.insertTextAtCurrentPosition(textView: textView, newText: "{\n\(String(repeating: tabchar, count: count))}")
+                self.applyHighlighting(to: textView, with: currentLineRange)
+                return false
+            }
+
             if text.contains("\n") {
                 guard let cur_line_text = currentLine(in: textView) else { return false }
                 let count = countConsecutiveOccurrences(of: tabchar, in: cur_line_text)
