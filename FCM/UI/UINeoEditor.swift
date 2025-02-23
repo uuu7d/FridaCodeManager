@@ -617,21 +617,13 @@ struct NeoEditor: UIViewRepresentable {
 
         func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
             guard let textView = textView as? CustomTextView else { return true }
-            let mode: Int = UserDefaults.standard.integer(forKey: "tabmode")
 
+            // AUTOCOMPLETION
             if textView.didPasted {
                 return true
             }
 
-            let tabchar: String = {
-                if mode != 1 {
-                    return "\t"
-                } else {
-                    let spacing: Int = UserDefaults.standard.integer(forKey: "tabspacing")
-                    return String(repeating: " ", count: spacing)
-                }
-            }()
-
+            // spacing options
             if text == "" && range.length == 1 {
                 if let cur_line_text = currentLine(in: textView), cur_line_text.hasSuffix(tabchar) {
                     if mode == 1 {
