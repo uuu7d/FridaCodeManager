@@ -46,6 +46,11 @@ struct MyApp: App {
             UserDefaults.standard.set(4, forKey: "tabspacing")
             UserDefaults.standard.set(true, forKey: "UPDFIX_002")
         }
+
+        if !UserDefaults.standard.bool(forKey: "UPDFIX_003") {
+            UserDefaults.standard.set(true, forKey: "CEAutocomplete")
+            UserDefaults.standard.set(true, forKey: "UPDFIX_003")
+        }
     }
 
     var body: some Scene {

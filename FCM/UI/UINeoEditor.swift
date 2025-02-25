@@ -251,7 +251,7 @@ struct NeoEditor: UIViewRepresentable {
         textView.layoutManager.addTextContainer(textView.textContainer)
         textView.layoutManager.ensureLayout(for: textView.textContainer)
 
-        var claimed: [Int] = []
+        /*var claimed: [Int] = []
 
         if dotypecheck {
             textView.setLayoutCompletionHandler {
@@ -279,7 +279,7 @@ struct NeoEditor: UIViewRepresentable {
                     }
                 }
             }
-        }
+        }*/
 
         if enableToolbar {
             setupToolbar(textView: textView)
@@ -456,7 +456,7 @@ struct NeoEditor: UIViewRepresentable {
         private var isInvalidated = false
         private var debounceWorkItem: DispatchWorkItem?
         private let debounceDelay: TimeInterval = 2.0
-        private var shouldCheck: Bool
+        //private var shouldCheck: Bool
         private var shouldAutocomplete: Bool
         let mode: Int = UserDefaults.standard.integer(forKey: "tabmode")
         let tabchar: String = {
@@ -471,18 +471,21 @@ struct NeoEditor: UIViewRepresentable {
 
         init(_ markdownEditorView: NeoEditor) {
             self.parent = markdownEditorView
-            self.shouldCheck = false
+            //self.shouldCheck = false
             self.shouldAutocomplete = false
-
-            let dotypecheck = UserDefaults.standard.bool(forKey: "CETypechecking")
             let suffix: String = gsuffix(from: self.parent.filepath)
+
+            /*let dotypecheck = UserDefaults.standard.bool(forKey: "CETypechecking")
             if dotypecheck {
                 if suffix == "c" || suffix == "cpp" || suffix == "m" || suffix == "mm" || suffix == "swift" {
                     self.shouldCheck = true
                 }
-            }
-            if suffix == "c" || suffix == "cpp" || suffix == "m" || suffix == "mm" || suffix == "swift" {
-               self.shouldAutocomplete = true
+            }*/
+            let doautocomplete = UserDefaults.standard.bool(forKey: "CEAutocomplete")
+            if doautocomplete {
+                if suffix == "c" || suffix == "cpp" || suffix == "m" || suffix == "mm" || suffix == "swift" {
+                    self.shouldAutocomplete = true
+                }
             }
         }
 
@@ -500,7 +503,7 @@ struct NeoEditor: UIViewRepresentable {
                 self.applyHighlighting(to: textView, with: textView.cachedLineRange ?? NSRange(location: 0, length: 0))
             }
 
-            if !shouldCheck {
+            /*if !shouldCheck {
                 return
             }
 
@@ -572,7 +575,7 @@ struct NeoEditor: UIViewRepresentable {
                 }
             }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + debounceDelay, execute: debounceWorkItem!)
+            DispatchQueue.main.asyncAfter(deadline: .now() + debounceDelay, execute: debounceWorkItem!)*/
         }
 
         func applyHighlighting(to textView: UITextView, with visibleRange: NSRange) {
@@ -1310,6 +1313,7 @@ struct NeoEditorSettings: View {
     @AppStorage("CERender") var render: Double = 1.0
     @AppStorage("CEFontSize") var font: Double = 13.0
     @AppStorage("CEToolbar") var toolbar: Bool = true
+    @AppStorage("CEAutocomplete") var autocomplete: Bool = true
     @AppStorage("CECurrentLineHighlighting") var current_line_highlighting: Bool = false
     var body: some View {
         List {
@@ -1337,6 +1341,7 @@ struct NeoEditorSettings: View {
                 Toggle("Line Highlighting", isOn: $current_line_highlighting)
                     .disabled(isPad)
                 Toggle("Toolbar", isOn: $toolbar)
+                Toggle("Autocomplete", isOn: $autocomplete)
             }
         }
         .navigationTitle("Code Editor")

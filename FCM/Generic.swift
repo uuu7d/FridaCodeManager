@@ -39,7 +39,7 @@ let global_sdkpath = "\(global_container)/.sdk"
 let global_sdkpath = "\(global_documents)/.sdk"
 #endif
 
-let changelog: String = "v2.0.alpha_5 \"iPad + Code Editor Update\"\n\nApp\n-> optimized the overall code\n-> added copy button to console\n-> removing Wiki for now\n-> disabled auto correction on project creation popup\n\nCode Editor\n-> removing highlighting cache\n-> fixed backspace in space spacing mode\n"
+let changelog: String = "v2.0.alpha_5 \"iPad + Code Editor Update\"\n\nApp\n-> optimized the overall code\n-> added copy button to console\n-> removing Wiki for now\n-> disabled auto correction on project creation popup\n\nCode Editor\n-> removing highlighting cache\n-> fixed backspace in space spacing mode\n-> added auto curly-braces, braces and string completion."
 let global_version: String = "v2.0.alpha_5"
 
 // compatibiloty checks

@@ -2,14 +2,14 @@ import SwiftUI
 import Foundation
 
 struct ExperimentalSettingsBundle: View {
-    @AppStorage("CETypechecking") var typecheck: Bool = false
+    //@AppStorage("CETypechecking") var typecheck: Bool = false
     @AppStorage("GIT_ENABLED") var enabled: Bool = false
     @AppStorage("GIT_TOKEN") var token: String = ""
     var body: some View {
         List {
-            Section(header: Text("Code Editor")) {
+            /*Section(header: Text("Code Editor")) {
                 Toggle("Typecheck Code", isOn: $typecheck)
-            }
+            }*/
             Section(header: Text("GitHub")) {
                 Toggle("Enabled", isOn: $enabled)
                 if enabled {
