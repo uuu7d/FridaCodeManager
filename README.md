@@ -51,6 +51,7 @@ The app is fully supported on rootless and roothide jailbroken iOS and iPadOS fr
 - RootHideDev: [https://github.com/roothider](https://github.com/roothider)
 - Manuel Chakravarty: [https://github.com/mchakravarty](https://github.com/mchakravarty)
 - Ayame Yumemi: [https://github.com/ayayame09](https://github.com/ayayame09)
+- Jonah Butler (Sora): [https://github.com/jonahnm](https://github.com/jonahnm)
 #### Side Kicks
 - Opa334: [https://github.com/opa334](https://github.com/opa334)
 - TheOS: [https://github.com/theos](https://github.com/theos)
