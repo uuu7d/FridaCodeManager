@@ -1,4 +1,7 @@
-# FridaCodeManager
+# FridaCodeManager (Deprecated)
+
+PROJECT IS OFFICIALLY DEPRECATED
+WAIT ON [NYXIAN](https://github.com/ProjectNyxian/Nyxian)
 
 ## Purpose
 FridaCodeManager was made to offer a easy way to code, compile and install iOS apps on jailbroken iPhones.
