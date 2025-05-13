@@ -1,4 +1,4 @@
-# FridaCodeManager (Deprecated)
+# FridaCodeManager (Deprecated FR)
 
 PROJECT IS OFFICIALLY DEPRECATED
 WAIT ON [NYXIAN](https://github.com/ProjectNyxian/Nyxian)
