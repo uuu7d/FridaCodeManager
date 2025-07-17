@@ -7,48 +7,50 @@ func exitWithError(_ message: String) -> Never {
     fatalError(message)
 }
 
-// jbroot environment
-#if jailbreak
-let jbroot: String = {
-    let preroot = String(cString: libroot_dyn_get_jbroot_prefix())
-    if FileManager.default.fileExists(atPath: preroot) {
-        return preroot
-    } else if let altroot = altroot(inPath: "/var/containers/Bundle/Application")?.path {
-        return altroot
-    } else {
-        exitWithError("failed to determine jbroot")
-    }
+// 🔧 جذر المجلد المخصص داخل Files > On My iPhone > FridaCodeManager
+let appBaseURL: URL = {
+    let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    let base  = docs.appendingPathComponent("FridaCodeManager")
+    return base
 }()
-#elseif trollstore
-let jbroot: String = "\(Bundle.main.bundlePath)/toolchain"
-#endif
 
-// global environment
+// 🔧 المسار العام (Container) الآن هو نفس appBaseURL
 let global_container: String = {
-    guard let path = contgen() else {
-        exitWithError("failed to generate global container")
+    let path = appBaseURL.path
+    // نتأكد أن المجلد موجود
+    if !FileManager.default.fileExists(atPath: path) {
+        try? FileManager.default.createDirectory(at: appBaseURL, withIntermediateDirectories: true)
     }
     return path
 }()
 
-let global_documents = "\(global_container)/Documents"
+// 🔧 مجلد Documents ضمن الـ container
+let global_documents: String = "\(global_container)/Documents"
 
-#if !stock
-let global_sdkpath = "\(global_container)/.sdk"
-#else
-let global_sdkpath = "\(global_documents)/.sdk"
-#endif
+// 🔧 مسار SDK ضمن الـ container
+let global_sdkpath: String = "\(global_container)/.sdk"
 
-let changelog: String = "v2.0.alpha_5 \"iPad + Code Editor Update\"\n\nApp\n-> optimized the overall code\n-> added copy button to console\n-> removing Wiki for now\n-> disabled auto correction on project creation popup\n\nCode Editor\n-> removing highlighting cache\n-> fixed backspace in space spacing mode\n-> added auto curly-braces, braces and string completion."
+// معلومات الإصدار والسجل (كما كانت)
+let changelog: String = """
+v2.0.alpha_5 "iPad + Code Editor Update"
+
+App
+-> optimized the overall code
+-> added copy button to console
+-> removing Wiki for now
+-> disabled auto correction on project creation popup
+
+Code Editor
+-> removing highlighting cache
+-> fixed backspace in space spacing mode
+-> added auto curly-braces, braces and string completion.
+"""
+
 let global_version: String = "v2.0.alpha_5"
 
-// compatibiloty checks
-let isiOS16: Bool = ProcessInfo.processInfo.isOperatingSystemAtLeast(OperatingSystemVersion(majorVersion: 16, minorVersion: 0, patchVersion: 0))
+// compatibility checks
+let isiOS16: Bool = ProcessInfo.processInfo.isOperatingSystemAtLeast(
+    OperatingSystemVersion(majorVersion: 16, minorVersion: 0, patchVersion: 0)
+)
 
-let isPad: Bool = {
-    if UIDevice.current.userInterfaceIdiom == .pad {
-        return true
-    } else {
-        return false
-    }
-}()
+let isPad: Bool = UIDevice.current.userInterfaceIdiom == .pad
