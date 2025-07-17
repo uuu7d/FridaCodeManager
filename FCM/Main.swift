@@ -30,62 +30,57 @@
 
 import SwiftUI
 
-// المسار البديل الآمن داخل sandbox بدون جيلبريك
-let jbroot: String = {
-    let appName = "FridaCodeManager"
-    let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-    let customRoot = documents.deletingLastPathComponent().appendingPathComponent(appName)
-
-    // إنشاء مجلد باسم التطبيق داخل "On My iPhone"
-    if !FileManager.default.fileExists(atPath: customRoot.path) {
-        try? FileManager.default.createDirectory(at: customRoot, withIntermediateDirectories: true, attributes: nil)
-    }
-
-    return customRoot.path
-}()
-
-let global_documents: String = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].path
-let global_sdkpath: String = "\(global_documents)/../.sdk"
-
 @main
 struct MyApp: App {
-    @State var hello: UUID = UUID()
-    @AppStorage("ui_update152") var upd: Bool = false
-
     init() {
-        let navigationBarAppearance = UINavigationBarAppearance()
-        navigationBarAppearance.backgroundColor = UIColor.systemBackground
-        let titleAttributes = [NSAttributedString.Key.foregroundColor: UIColor.label]
-        navigationBarAppearance.titleTextAttributes = titleAttributes
-        let buttonAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
-        navigationBarAppearance.buttonAppearance.normal.titleTextAttributes = buttonAttributes
-        let backItemAppearance = UIBarButtonItemAppearance()
-        backItemAppearance.normal.titleTextAttributes = [.foregroundColor : UIColor.label]
-        navigationBarAppearance.backButtonAppearance = backItemAppearance
-        UINavigationBar.appearance().standardAppearance = navigationBarAppearance
-        UINavigationBar.appearance().compactAppearance = navigationBarAppearance
-        UINavigationBar.appearance().scrollEdgeAppearance = navigationBarAppearance
+        UIInit(type: 0)
 
-        let appearance = UITabBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor.systemBackground
-        UITabBar.appearance().standardAppearance = appearance
-        UITabBar.appearance().scrollEdgeAppearance = appearance
+        if !UserDefaults.standard.bool(forKey: "UPDFIX_001") {
+            setTheme(0)
+            storeTheme()
+            UserDefaults.standard.set(true, forKey: "UPDFIX_001")
+        }
+
+        if !UserDefaults.standard.bool(forKey: "UPDFIX_002") {
+            UserDefaults.standard.set(0, forKey: "tabmode")
+            UserDefaults.standard.set(4, forKey: "tabspacing")
+            UserDefaults.standard.set(true, forKey: "UPDFIX_002")
+        }
+
+        if !UserDefaults.standard.bool(forKey: "UPDFIX_003") {
+            UserDefaults.standard.set(true, forKey: "CEAutocomplete")
+            UserDefaults.standard.set(true, forKey: "UPDFIX_003")
+        }
+
+        // 🔧 إنشاء مجلد التطبيق في Files
+        createAppDirectory()
     }
 
     var body: some Scene {
         WindowGroup {
-            ContentView(hello: $hello)
-                .onOpenURL { url in
-                    importProj(target: url.path)
-                    hello = UUID()
+            RootView()
+        }
+    }
+}
+
+/// 🔧 دالة لإنشاء مجلد التطبيق والمجلدات الفرعية
+func createAppDirectory() {
+    let fileManager = FileManager.default
+    if let root = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first {
+        let base = root.appendingPathComponent("FridaCodeManager")
+        let subfolders = ["Projects", "SDK", "Libraries"]
+        do {
+            if !fileManager.fileExists(atPath: base.path) {
+                try fileManager.createDirectory(at: base, withIntermediateDirectories: true)
+            }
+            for folder in subfolders {
+                let path = base.appendingPathComponent(folder)
+                if !fileManager.fileExists(atPath: path.path) {
+                    try fileManager.createDirectory(at: path, withIntermediateDirectories: true)
                 }
-                .onAppear {
-                    if !upd {
-                        resetlayout()
-                        upd = true
-                    }
-                }
+            }
+        } catch {
+            print("❌ خطأ أثناء إنشاء مجلد التطبيق: \(error)")
         }
     }
 }
