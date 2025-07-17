@@ -30,6 +30,13 @@
 
 import SwiftUI
 
+// 🔧 ثابت يشير إلى جذر مجلد FridaCodeManager في Files > On My iPhone
+let appBaseURL: URL = {
+    let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    let base = docs.appendingPathComponent("FridaCodeManager")
+    return base
+}()
+
 struct RootView: View {
     @State private var project_list_id: UUID = UUID()
     @State private var projects: [Project] = []
@@ -44,10 +51,6 @@ struct RootView: View {
                 .tabItem {
                     Label("Projects", systemImage: "folder")
                 }
-            /*WikiView()
-                .tabItem {
-                    Label("Wiki", systemImage: "book.fill")
-                }*/
             Settings()
                 .tabItem {
                     Label("Settings", systemImage: "gear")
@@ -67,101 +70,105 @@ struct RootView: View {
     }
 }
 
-func GetProjectsBind(Projects: Binding<[Project]>) -> Void {
+/// 🔧 دالة لقراءة قائمة المشاريع من المجلد الفرعي "Projects"
+func GetProjectsBind(Projects: Binding<[Project]>) {
     DispatchQueue.global(qos: .background).async {
         do {
-            let currentProjects = Projects.wrappedValue
-            var foundProjectNames = Set<String>()
+            let projectFolder = appBaseURL.appendingPathComponent("Projects")
+            let fileManager = FileManager.default
+            let items = try fileManager.contentsOfDirectory(atPath: projectFolder.path)
 
-            for Item in try FileManager.default.contentsOfDirectory(atPath: global_documents) {
-                if Item == "Inbox" || Item == "savedLayouts.json" || Item == ".sdk" || Item == ".cache" || Item == "virtualFS.dat" {
-                    continue
+            var foundProjectNames = Set<String>()
+            let currentProjects = Projects.wrappedValue
+
+            for item in items {
+                // تجاهل ملفات النظام أو الملفات الخاصة
+                guard item != "Inbox",
+                      item != "savedLayouts.json",
+                      item != ".sdk",
+                      item != ".cache",
+                      item != "virtualFS.dat"
+                else { continue }
+
+                foundProjectNames.insert(item)
+
+                // مسارات Info.plist و DontTouchMe.plist ضمن Resources
+                let projectPath = projectFolder.appendingPathComponent(item)
+                let infoPlistURL = projectPath
+                    .appendingPathComponent("Resources")
+                    .appendingPathComponent("Info.plist")
+                let dontTouchMeURL = projectPath
+                    .appendingPathComponent("Resources")
+                    .appendingPathComponent("DontTouchMe.plist")
+
+                // قيم افتراضية
+                var bundleID  = "Corrupted"
+                var version   = "Unknown"
+                var executable = "Unknown"
+                var macro     = "Release"
+                var minOS     = "Unknown"
+                var sdk       = "Unknown"
+                var type      = "Applications"
+
+                // قراءة Info.plist
+                if let info = NSDictionary(contentsOf: infoPlistURL) {
+                    if let bid = info["CFBundleIdentifier"]   as? String { bundleID   = bid }
+                    if let ver = info["CFBundleVersion"]      as? String { version    = ver }
+                    if let exe = info["CFBundleExecutable"]   as? String { executable = exe }
+                    if let tg  = info["MinimumOSVersion"]     as? String { minOS      = tg  }
                 }
 
-                foundProjectNames.insert(Item)
+                // قراءة DontTouchMe.plist
+                if let info2 = NSDictionary(contentsOf: dontTouchMeURL) {
+                    if let s = info2["SDK"]  as? String { sdk   = s }
+                    if let t = info2["TYPE"] as? String { type  = t }
+                    if let m = info2["CMacro"] as? String { macro = m }
+                }
 
-                do {
-                    let infoPlistPath = "\(global_documents)/\(Item)/Resources/Info.plist"
-                    let dontTouchMePlistPath = "\(global_documents)/\(Item)/Resources/DontTouchMe.plist"
+                let newProject = Project(
+                    Name:        item,
+                    BundleID:    bundleID,
+                    Version:     version,
+                    ProjectPath: projectPath.path,
+                    Executable:  executable,
+                    Macro:       macro,
+                    SDK:         sdk,
+                    TG:          minOS,
+                    TYPE:        type
+                )
 
-                    var BundleID = "Corrupted"
-                    var Version = "Unknown"
-                    var Executable = "Unknown"
-                    var Macro = "Release"
-                    var TG = "Unknown"
-                    var SDK = "Unknown"
-                    var TYPE = "Applications"
-
-                    if let Info = NSDictionary(contentsOfFile: infoPlistPath) {
-                        if let extractedBundleID = Info["CFBundleIdentifier"] as? String {
-                            BundleID = extractedBundleID
-                        }
-                        if let extractedVersion = Info["CFBundleVersion"] as? String {
-                            Version = extractedVersion
-                        }
-                        if let extractedExecutable = Info["CFBundleExecutable"] as? String {
-                            Executable = extractedExecutable
-                        }
-                        if let extractedTG = Info["MinimumOSVersion"] as? String {
-                            TG = extractedTG
-                        }
-                    }
-
-                    if let Info2 = NSDictionary(contentsOfFile: dontTouchMePlistPath) {
-                        if let extractedSDK = Info2["SDK"] as? String {
-                            SDK = extractedSDK
-                        }
-                        if let extractedTYPE = Info2["TYPE"] as? String {
-                            TYPE = extractedTYPE
-                        }
-                        if let extractedMacro = Info2["CMacro"] as? String {
-                            Macro = extractedMacro
-                        }
-                    }
-
-                    let newProject = Project(Name: Item, BundleID: BundleID, Version: Version, ProjectPath: "\(global_documents)/\(Item)", Executable: Executable, Macro: Macro, SDK: SDK, TG: TG, TYPE: TYPE)
-
-                    if let existingIndex = currentProjects.firstIndex(where: { $0.Name == Item }) {
-                        let existingProject = currentProjects[existingIndex]
-                        if existingProject != newProject {
-                            usleep(500)
-                            DispatchQueue.main.async {
-                                withAnimation {
-                                    Projects.wrappedValue[existingIndex] = newProject
-                                }
-                            }
-                        }
-                    } else {
+                // تحديث القائمة في الواجهة إن تغيّر المشروع
+                if let idx = currentProjects.firstIndex(where: { $0.Name == item }) {
+                    if currentProjects[idx] != newProject {
                         usleep(500)
                         DispatchQueue.main.async {
                             withAnimation {
-                                Projects.wrappedValue.append(newProject)
+                                Projects.wrappedValue[idx] = newProject
                             }
                         }
                     }
-                } /*catch {
+                } else {
                     usleep(500)
-                    print("Failed to process item: \(Item), error: \(error)")
                     DispatchQueue.main.async {
                         withAnimation {
-                            if !Projects.wrappedValue.contains(where: { $0.Name == Item }) {
-                                Projects.wrappedValue.append(Project(Name: "Corrupted", BundleID: "Corrupted", Version: "Unknown", ProjectPath: "\(global_documents)/\(Item)", Executable: "Unknown", Macro: "", SDK: "Unknown", TG: "Unknown", TYPE: "Unknown"))
-                            }
+                            Projects.wrappedValue.append(newProject)
                         }
-                    }
-                }*/
-            }
-
-            usleep(500)
-            DispatchQueue.main.async {
-                withAnimation {
-                    Projects.wrappedValue.removeAll { project in
-                        !foundProjectNames.contains(project.Name)
                     }
                 }
             }
+
+            // حذف المشاريع التي أُزيلت من المجلد
+            usleep(500)
+            DispatchQueue.main.async {
+                withAnimation {
+                    Projects.wrappedValue.removeAll { proj in
+                        !foundProjectNames.contains(proj.Name)
+                    }
+                }
+            }
+
         } catch {
-            print(error)
+            print("❌ خطأ بقراءة المشاريع: \(error)")
         }
     }
 }
