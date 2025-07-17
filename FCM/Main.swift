@@ -30,32 +30,62 @@
 
 import SwiftUI
 
+// المسار البديل الآمن داخل sandbox بدون جيلبريك
+let jbroot: String = {
+    let appName = "FridaCodeManager"
+    let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    let customRoot = documents.deletingLastPathComponent().appendingPathComponent(appName)
+
+    // إنشاء مجلد باسم التطبيق داخل "On My iPhone"
+    if !FileManager.default.fileExists(atPath: customRoot.path) {
+        try? FileManager.default.createDirectory(at: customRoot, withIntermediateDirectories: true, attributes: nil)
+    }
+
+    return customRoot.path
+}()
+
+let global_documents: String = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].path
+let global_sdkpath: String = "\(global_documents)/../.sdk"
+
 @main
 struct MyApp: App {
+    @State var hello: UUID = UUID()
+    @AppStorage("ui_update152") var upd: Bool = false
+
     init() {
-        UIInit(type: 0)
+        let navigationBarAppearance = UINavigationBarAppearance()
+        navigationBarAppearance.backgroundColor = UIColor.systemBackground
+        let titleAttributes = [NSAttributedString.Key.foregroundColor: UIColor.label]
+        navigationBarAppearance.titleTextAttributes = titleAttributes
+        let buttonAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+        navigationBarAppearance.buttonAppearance.normal.titleTextAttributes = buttonAttributes
+        let backItemAppearance = UIBarButtonItemAppearance()
+        backItemAppearance.normal.titleTextAttributes = [.foregroundColor : UIColor.label]
+        navigationBarAppearance.backButtonAppearance = backItemAppearance
+        UINavigationBar.appearance().standardAppearance = navigationBarAppearance
+        UINavigationBar.appearance().compactAppearance = navigationBarAppearance
+        UINavigationBar.appearance().scrollEdgeAppearance = navigationBarAppearance
 
-        if !UserDefaults.standard.bool(forKey: "UPDFIX_001") {
-            setTheme(0)
-            storeTheme()
-            UserDefaults.standard.set(true, forKey: "UPDFIX_001")
-        }
-
-        if !UserDefaults.standard.bool(forKey: "UPDFIX_002") {
-            UserDefaults.standard.set(0, forKey: "tabmode")
-            UserDefaults.standard.set(4, forKey: "tabspacing")
-            UserDefaults.standard.set(true, forKey: "UPDFIX_002")
-        }
-
-        if !UserDefaults.standard.bool(forKey: "UPDFIX_003") {
-            UserDefaults.standard.set(true, forKey: "CEAutocomplete")
-            UserDefaults.standard.set(true, forKey: "UPDFIX_003")
-        }
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor.systemBackground
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
     }
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            ContentView(hello: $hello)
+                .onOpenURL { url in
+                    importProj(target: url.path)
+                    hello = UUID()
+                }
+                .onAppear {
+                    if !upd {
+                        resetlayout()
+                        upd = true
+                    }
+                }
         }
     }
 }
